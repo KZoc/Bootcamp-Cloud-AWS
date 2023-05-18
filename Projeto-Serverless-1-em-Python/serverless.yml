@@ -1,0 +1,81 @@
+service: Project-Serverless-DIO-Python
+
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: python3.9
+  environment:
+    DYNAMODB_TABLE: 'PythonTable'
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: arn:aws:dynamodb:xxxxxxxxxxxxxxxxxxonTable
+
+functions:
+  insereItem:
+    handler: src/insereItem.insereItem
+    events:
+      - http:
+          path: src
+          method: post
+          cors: true
+
+  scanMode:
+    handler: src/scanMode.scanMode
+    events:
+      - http:
+          path: src
+          method: get
+          cors: true
+
+  get:
+    handler: src/get.get
+    events:
+      - http:
+          path: src/{id}
+          method: get
+          cors: true
+
+  update:
+    handler: src/update.update
+    events:
+      - http:
+          path: src/{id}
+          method: put
+          cors: true
+
+  delete:
+    handler: src/delete.delete
+    events:
+      - http:
+          path: src/{id}
+          method: delete
+          cors: true
+
+resources:
+  Resources:
+    PythonTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: "PythonTable"
