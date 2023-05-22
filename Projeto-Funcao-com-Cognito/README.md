@@ -1,146 +1,51 @@
-<!--
-title: 'AWS Serverless REST API with DynamoDB store example in Python'
-description: 'This example demonstrates how to setup a RESTful Web Service allowing you to create, list, get, update and delete Todos. DynamoDB is used to store the data.'
-layout: Doc
-framework: v1
-platform: AWS
-language: Python
-priority: 10
-authorLink: 'https://github.com/godfreyhobbs'
-authorName: 'Godfrey Hobbs'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/8434141?v=4&s=140'
--->
-# Serverless REST API
+# Projeto Prático - Utilizando os serviços Amazon Cognito, DynamoDB, API Gateway e AWS Lambda
 
-This example demonstrates how to setup a [RESTful Web Services](https://en.wikipedia.org/wiki/Representational_state_transfer#Applied_to_web_services) allowing you to create, list, get, update and delete Todos. DynamoDB is used to store the data. This is just an example and of course you could use any data storage as a backend.
+## Minhas etapas de criação:
 
-## Structure
+- Criei uma tabela no DynamoDB chamada "Tabela_Cognito_Manual", com dois campos um "id" e "price", apenas para teste.
+- Depois criei minha Função Lambda em Python, para inserir itens na tabela. Para isso atribuí a ela, através de uma permissão inline, o acesso a tabela ("Tabela_Cognito_Manual").
+- Depois criei uma REST API no API Gateway, dentro dessa API, criei um Recurso. Com o diretório do recurso selecionado fui em Criar Método, e criei um método POST. Integrei o método POST à função lambda criada, sendo importante que, nas etapas de configuração o box "Use Lambda Proxy integration" deve ser selecionado, assim como, a região deve ser a mesma da que a função foi criada.
+-  Fiz o deploy do método da API Gateway.
+-  Agora, abri o POSTMAN e testei a API utilizando a URL invoke (endpoint) que foi gerada na etapa anterior.
 
-This service has a separate directory for all the todo operations. For each operation exactly one file exists e.g. `todos/delete.py`. In each of these files there is exactly one function defined.
+## Configurando o Cognito:
 
-The idea behind the `todos` directory is that in case you want to create a service containing multiple resources e.g. users, notes, comments you could do so in the same service. While this is certainly possible you might consider creating a separate service for each resource. It depends on the use-case and your preference.
+-  Entrei no Cognito e criei uma User Pool, onde os parâmetros de login seriam os mais básicos (para fins de teste).
+-  Configurei meu App Client e alguns dos parâmetros são importantes ativar para depois testar no POSTMAN, que são:
 
-## Use-cases
+Tipos de concessão do OAuth:
 
-- API for a Web Application
-- API for a Mobile Application
+  - Concessão de código de autorização
+  - Concessão implícita
+  
+Escopos de conexão OpenID:
+  - email
+  - openid
+ 
+- Uma vez criado o App Client, copiei e guardei seu id de acesso, a URL de Callback e a URL de login criada ao criar a User Pool.
 
-## Setup
+## Agora no POSTMAN:
 
-```bash
-npm install -g serverless
-```
+- Criei uma request do tipo GET, para obter o token de acesso.
+- Em "Authorization", selecionei o tipo como "OAuth 2.0".
+- Em "Configure New Token" preenchi os campos da seguinte forma:
+  - Token Name: TokenTeste1
+  - Grant Type: Implicit
+  - Callback URL: Colei a URL criada
+  - Auth URL: Colei a URL criada e ao final acrescentei "/login"
+  - Client ID: Colei o client id que salvei antes
+  - Scope: Digitei "email openid"
+  - Client Authentication: "Send client credentials in body"
+  - Ao fim da página cliquei no botão "Get New Access Token"
 
-## Deploy
+- Abrirá uma página de login, onde primeiro, fiz o cadastro com um email válido, e tive de autenticar o email com o código que o Cognito enviou para o meu email.
 
-In order to deploy the endpoint simply run
+- Novamente cliquei no botão  "Get New Access Token" e preenchi com os dados para login.
+- Como retorno abriu uma janela com o token de acesso para o usuário.
+- Para usar o token criei outra request no POSTMAN, sendo esta do tipo POST.
+- Em "Authorization" selecionei "Bearer Token" e colei o token que foi gerado.
+- Em "Body" -> "raw" -> "JSON": Digitei o que era para ser inserido na tabela:
+  - {"id":"021", "price":21000}
 
-```bash
-serverless deploy
-```
-
-The expected result should be similar to:
-
-```bash
-Serverless: Packaging service…
-Serverless: Uploading CloudFormation file to S3…
-Serverless: Uploading service .zip file to S3…
-Serverless: Updating Stack…
-Serverless: Checking Stack update progress…
-Serverless: Stack update finished…
-
-Service Information
-service: serverless-rest-api-with-dynamodb
-stage: dev
-region: us-east-1
-api keys:
-  None
-endpoints:
-  POST - https://45wf34z5yf.execute-api.us-east-1.amazonaws.com/dev/todos
-  GET - https://45wf34z5yf.execute-api.us-east-1.amazonaws.com/dev/todos
-  GET - https://45wf34z5yf.execute-api.us-east-1.amazonaws.com/dev/todos/{id}
-  PUT - https://45wf34z5yf.execute-api.us-east-1.amazonaws.com/dev/todos/{id}
-  DELETE - https://45wf34z5yf.execute-api.us-east-1.amazonaws.com/dev/todos/{id}
-functions:
-  serverless-rest-api-with-dynamodb-dev-update: arn:aws:lambda:us-east-1:488110005556:function:serverless-rest-api-with-dynamodb-dev-update
-  serverless-rest-api-with-dynamodb-dev-get: arn:aws:lambda:us-east-1:488110005556:function:serverless-rest-api-with-dynamodb-dev-get
-  serverless-rest-api-with-dynamodb-dev-list: arn:aws:lambda:us-east-1:488110005556:function:serverless-rest-api-with-dynamodb-dev-list
-  serverless-rest-api-with-dynamodb-dev-create: arn:aws:lambda:us-east-1:488110005556:function:serverless-rest-api-with-dynamodb-dev-create
-  serverless-rest-api-with-dynamodb-dev-delete: arn:aws:lambda:us-east-1:488110005556:function:serverless-rest-api-with-dynamodb-dev-delete
-```
-
-## Usage
-
-You can create, retrieve, update, or delete todos with the following commands:
-
-### Create a Todo
-
-```bash
-curl -X POST https://XXXXXXX.execute-api.us-east-1.amazonaws.com/dev/todos --data '{ "text": "Learn Serverless" }'
-```
-
-No output
-
-### List all Todos
-
-```bash
-curl https://XXXXXXX.execute-api.us-east-1.amazonaws.com/dev/todos
-```
-
-Example output:
-```bash
-[{"text":"Deploy my first service","id":"ac90feaa11e6-9ede-afdfa051af86","checked":true,"updatedAt":1479139961304},{"text":"Learn Serverless","id":"206793aa11e6-9ede-afdfa051af86","createdAt":1479139943241,"checked":false,"updatedAt":1479139943241}]%
-```
-
-### Get one Todo
-
-```bash
-# Replace the <id> part with a real id from your todos table
-curl https://XXXXXXX.execute-api.us-east-1.amazonaws.com/dev/todos/<id>
-```
-
-Example Result:
-```bash
-{"text":"Learn Serverless","id":"ee6490d0-aa11e6-9ede-afdfa051af86","createdAt":1479138570824,"checked":false,"updatedAt":1479138570824}%
-```
-
-### Update a Todo
-
-```bash
-# Replace the <id> part with a real id from your todos table
-curl -X PUT https://XXXXXXX.execute-api.us-east-1.amazonaws.com/dev/todos/<id> --data '{ "text": "Learn Serverless", "checked": true }'
-```
-
-Example Result:
-```bash
-{"text":"Learn Serverless","id":"ee6490d0-aa11e6-9ede-afdfa051af86","createdAt":1479138570824,"checked":true,"updatedAt":1479138570824}%
-```
-
-### Delete a Todo
-
-```bash
-# Replace the <id> part with a real id from your todos table
-curl -X DELETE https://XXXXXXX.execute-api.us-east-1.amazonaws.com/dev/todos/<id>
-```
-
-No output
-
-## Scaling
-
-### AWS Lambda
-
-By default, AWS Lambda limits the total concurrent executions across all functions within a given region to 100. The default limit is a safety limit that protects you from costs due to potential runaway or recursive functions during initial development and testing. To increase this limit above the default, follow the steps in [To request a limit increase for concurrent executions](http://docs.aws.amazon.com/lambda/latest/dg/concurrent-executions.html#increase-concurrent-executions-limit).
-
-### DynamoDB
-
-When you create a table, you specify how much provisioned throughput capacity you want to reserve for reads and writes. DynamoDB will reserve the necessary resources to meet your throughput needs while ensuring consistent, low-latency performance. You can change the provisioned throughput and increasing or decreasing capacity as needed.
-
-This is can be done via settings in the `serverless.yml`.
-
-```yaml
-  ProvisionedThroughput:
-    ReadCapacityUnits: 1
-    WriteCapacityUnits: 1
-```
-
-In case you expect a lot of traffic fluctuation we recommend to checkout this guide on how to auto scale DynamoDB [https://aws.amazon.com/blogs/aws/auto-scale-dynamodb-with-dynamic-dynamodb/](https://aws.amazon.com/blogs/aws/auto-scale-dynamodb-with-dynamic-dynamodb/)
+- Abaixo apareceu o texto: "Item inserido com sucesso!"
+- Para confirmar foi no DynamoDB, entrei na tabela que deveria receber o item e cliquei para listar itens, e lá estava o item inserido.
