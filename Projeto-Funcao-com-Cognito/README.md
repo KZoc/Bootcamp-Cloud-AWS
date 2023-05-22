@@ -24,6 +24,14 @@ Escopos de conexão OpenID:
  
 - Uma vez criado o App Client, copiei e guardei seu id de acesso, a URL de Callback e a URL de login criada ao criar a User Pool.
 
+## Voltando no API Gateway:
+
+- Clicando no método POST criado, aparece ao lado os blocos da lógica da API.
+- Cliquei sobre "Method Request".
+- Nessa nova página dentro de "Settings", primeiro dei um F5 para atualizar a página, depois em "Authorization", selecionei o autoridador do Cognito que foi criado, no meu caso selecionei
+"DioCognitoAuthorizer" (que foi o nome que eu coloquei no Cognito).
+- Em seguida fiz novamente o Deploy da API.
+
 ## Agora no POSTMAN:
 
 - Criei uma request do tipo GET, para obter o token de acesso.
