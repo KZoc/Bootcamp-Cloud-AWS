@@ -18,7 +18,7 @@ provider:
             - dynamodb:GetItem
             - dynamodb:scan
           Resource:
-            - arn:aws:dynamodb:us-east-1:008408812202:table/TabelaServerless
+            - arn:aws:dynamodb:us-east-1xxxxxxxxxxxxxxxxServerless
 
 
 # Funções ///////////////////////////
